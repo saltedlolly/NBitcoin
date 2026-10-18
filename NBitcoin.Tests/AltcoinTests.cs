@@ -814,5 +814,27 @@ namespace NBitcoin.Tests
 			Assert.StartsWith("dgb1p", key.PubKey.GetAddress(ScriptPubKeyType.TaprootBIP86, AltNetworkSets.DigiByte.Mainnet).ToString());
 			Assert.StartsWith("dgbrt1q", key.PubKey.GetAddress(ScriptPubKeyType.Segwit, AltNetworkSets.DigiByte.Regtest).ToString());
 		}
+
+		[Theory]
+		[Trait("UnitTest", "UnitTest")]
+		// Real mainnet headers, one per mining algorithm
+		[InlineData("Scrypt", "4da631f2ac1bed857bd968c67c913978274d8aabed64ab2bcebc1665d7f4d3a0", "0100000096841e6ecc8dc9643aaddfb6fcd616e08f0777c87b508f1c9fb35e461bea9774602c4f3b68c30ab9f118d8db980f0301880c5b3ab7ff42414ec1cd8e3b4a8addec73d052f0ff0f1e80000f37")]
+		[InlineData("SHA256D", "0000000000000000200b848138fafc0911c747133778ccbf10f54944c481a985", "42020020200275e36faa125a4300f53ff9f66c30fcae8d49ec41eed67854e20af6622b94a21744bf085a965c01225fe6cc8945ee75d069684735016e04b0b1ebbfc7d428ec701b5d218e0a19de08a600")]
+		[InlineData("Groestl", "f5e76fa2dd1aed821038f6393bd3c0acb53ea03d4931aead346d9f93e5e1a28f", "4204002085a981c44449f510bfcc78371347c71109fcfa3881840b200000000000000000db064367c850c3fa2dc8c31c0b606c76cff2f8e6ab52b3b0e8f31c69ce004e13b1701b5d85ff051af951e805")]
+		[InlineData("Skein", "78012467bc8fd4b43f9b4d1afb34de4d171ae7f34c83dc8e56b283e4e967600c", "42060020cb6ae325e355b1efa1b35bd4af67035c7d764da1e712f595c24ff48e6a1f58900a9d66d93c6d76ffa2df4e642198023538aefc0d2f6dab571a1c27773cebdb1758711b5dcd410a1a604e5236")]
+		[InlineData("Qubit", "90061a75e3bca47f6f62b39317227d830f8c0d8bb69364f14c44270e6130cf73", "42080020187c4adc5ac4f2f336fd421da8d1b94546ec5cd0d04c7eb0020000000000000076554249042b61a810dbb14a32bb04b64e8e9b5f57de9de3382cf9796625101535711b5d5282081ae36aface")]
+		[InlineData("Odo", "1d2145fb8c9add9c01f288826e54759ea151da4ce370cc137ce23a543ea038e8", "020e002069c7e7f82908c8ff6de28acd35c01b896d66a767e82b4d721875088e74f9b89eded69c91edecde94b90e3880189c53c401a156238f1808a48976cb211ec524e8bd92d36ac19a6e1ac367e21f")]
+		public void DigiByteChecksProofOfWorkForEachAlgo(string algo, string hash, string headerHex)
+		{
+			var network = AltNetworkSets.DigiByte.Mainnet;
+			var header = network.Consensus.ConsensusFactory.CreateBlockHeader();
+			header.ReadWrite(Encoders.Hex.DecodeData(headerHex), network.Consensus.ConsensusFactory);
+			Assert.Equal(uint256.Parse(hash), header.GetHash());
+			Assert.Equal(algo, ((NBitcoin.Altcoins.DigiByte.DigiByteBlockHeader)header).Algo.ToString());
+			Assert.True(header.CheckProofOfWork());
+
+			header.Nonce ^= 1;
+			Assert.False(header.CheckProofOfWork());
+		}
 	}
 }
